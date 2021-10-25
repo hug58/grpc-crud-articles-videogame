@@ -1,0 +1,80 @@
+
+syntax = "proto3";
+package proto;
+option go_package = "./article";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "google/api/annotations.proto";
+
+//services
+
+service ArticleService{
+    rpc ListArticleByUser(ListArticlesByUserRequest) returns (ListArticlesResponse);
+    rpc ListArticle(google.protobuf.Empty) returns (ListArticlesResponse){
+    		option (google.api.http) ={
+			get: "/v1/article"
+		};    
+    };
+    rpc CreateArticle(CreateArticlerRequest) returns (ArticleId){
+    		option (google.api.http) ={
+			post: "/v1/article"
+			body: "article"
+		};
+    };
+    rpc DeleteArticle(ArticleId) returns (Response);
+    rpc UpdateArticle(CreateArticlerRequest) returns (CreateArticlerRequest);
+    rpc GetOneArticle(ArticleId) returns (CreateArticlerRequest);
+}
+
+
+//MESSAGES
+
+message Article {
+    uint32 id = 1;
+    string name = 2;
+    int32 price = 3;
+    string description = 4;
+    int32 user_id = 5;
+	google.protobuf.Timestamp created_at = 6;
+	google.protobuf.Timestamp updated_at = 7;
+    
+}
+
+//Create Article
+message CreateArticlerRequest {
+    uint32 id = 1;
+    string name = 2;
+    int32 price = 3;
+    string description = 4;
+    int32 user_id = 5;
+}
+
+
+//Response string generico
+
+message Response {
+    string msg = 1;
+}
+
+//Create Request
+message ArticleRequest {
+    Article article = 1;
+}
+
+//Create Response
+message ArticleId {
+    uint32 article_id = 1;
+}
+
+//LIST
+
+message ListArticlesByUserRequest {
+    uint32 user_id = 1;
+
+}
+
+message ListArticlesResponse {
+    repeated Article articles = 1;
+}
