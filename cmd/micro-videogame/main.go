@@ -80,6 +80,11 @@ func (s *server) CreateArticle(ctx context.Context, req *pb.CreateArticlerReques
 		return nil, nil
 	}
 
+	/*
+		CREATE ARTICLE
+
+	*/
+
 	article, err := s.Repository.Create(ctx, req)
 	if err != nil {
 		return nil, err
