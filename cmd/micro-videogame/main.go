@@ -4,8 +4,11 @@ import (
 	"api-grpc-articles-videogame/internal/data"
 	"api-grpc-articles-videogame/pkg/article"
 	"os"
+	"time"
 
 	pb "api-grpc-articles-videogame/proto"
+	pc "api-grpc-articles-videogame/proto/users"
+
 	"context"
 	"fmt"
 	"log"
@@ -16,12 +19,25 @@ import (
 	"google.golang.org/grpc"
 )
 
+type serverContext struct {
+	// client to GRPC service
+	userClient pc.UserServiceClient
+
+	// default timeout
+	timeout time.Duration
+
+	// some other useful objects, like config
+	// or logger (to replace global logging)
+	// (...)
+}
+
 type server struct {
 	pb.UnimplementedArticleServiceServer
 	Repository article.Repository
+	context    *serverContext
 }
 
-var articles []*pb.Article
+//var articles []*pb.Article
 
 //Listar Tareas
 func (s *server) ListArticle(ctx context.Context, req *empty.Empty) (*pb.ListArticlesResponse, error) {
@@ -39,12 +55,35 @@ func (s *server) ListArticle(ctx context.Context, req *empty.Empty) (*pb.ListArt
 //Crear una tarea
 func (s *server) CreateArticle(ctx context.Context, req *pb.CreateArticlerRequest) (*pb.ArticleId, error) {
 	log.Printf("Creating Article Videogame %v", req)
-	article, err := s.Repository.Create(ctx, req)
+
+	clientCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	cli := s.context.userClient
+
+	/*
+
+		VERIFY USER WITH CLIENT
+	*/
+
+	respo, err := cli.VerifyUser(clientCtx, &pc.VerifyUserRequest{
+		UserId: uint32(req.UserId),
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
+	log.Printf("Client %v ", respo.IsExist.Number())
+	if respo.IsExist.Number() != 1 {
+		log.Printf("User id %v not found", req.UserId)
+		return nil, nil
+	}
+
+	article, err := s.Repository.Create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	//articles = append(articles, req.Article)
 	return &pb.ArticleId{
 		ArticleId: article.Id,
@@ -96,6 +135,25 @@ func (s *server) UpdateArticle(ctx context.Context, req *pb.CreateArticlerReques
 	return article, nil
 }
 
+/*
+
+CLIENT
+
+*/
+
+// constructor for server context
+func newServerContext(endpoint string) (*serverContext, error) {
+	userConn, err := grpc.Dial(endpoint, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	ctx := &serverContext{
+		userClient: pc.NewUserServiceClient(userConn),
+		timeout:    time.Second,
+	}
+	return ctx, nil
+}
+
 //MAIN
 
 func main() {
@@ -114,7 +172,12 @@ func main() {
 		log.Fatalf("Error cannot create tcp connection %v", err)
 	}
 
-	//conexion a la base de datos
+	/*
+
+		CONNECTION DATABASE POSTGRES
+
+	*/
+
 	d := data.New()
 	if err := d.DB.Ping(); err != nil {
 		log.Fatal(err)
@@ -129,11 +192,29 @@ func main() {
 	}
 	log.Printf("Connection established running on port %v", port)
 
+	/*
+
+		CONNECTION WITH USERS
+
+	*/
+
+	serverCtx, err := newServerContext(os.Getenv("USER_SERVICE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	/*
+
+		CONTEXT SERVER
+
+	*/
+
 	ser := grpc.NewServer()
 	pb.RegisterArticleServiceServer(ser, &server{
 		Repository: &data.ArticlesRepository{
 			Data: data.New(),
 		},
+		context: serverCtx,
 	})
 
 	if err := ser.Serve(listen); err != nil {

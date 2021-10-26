@@ -1,0 +1,98 @@
+
+syntax = "proto3";
+package proto;
+option go_package = "./users";
+
+import "google/protobuf/empty.proto";
+
+
+//Service
+/*
+service TaskService{
+    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+    rpc ListTasks(google.protobuf.Empty) returns (ListTasksResponse);
+}
+*/
+
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    rpc VerifyUser(VerifyUserRequest) returns (VerifyUserResponse);
+    rpc ListUser(google.protobuf.Empty) returns (ListUserResponse);
+
+    //rpc VerifyHash
+
+}
+//
+
+
+//Verify user
+
+message User{
+    enum UserStatus {
+        OFF = 0;
+        ON = 1;
+    }
+
+    uint32 id = 1;
+    string username = 2;
+    UserStatus is_active = 3;
+}
+
+message CreateUserRequest {
+    User user = 1;
+}
+
+message CreateUserResponse {
+    uint32 user_id = 1; 
+}
+
+message VerifyUserRequest {
+    uint32 user_id = 1;
+}
+
+message VerifyUserResponse {
+    enum UserExists {
+        OFF = 0;
+        ON = 1;
+    }
+    UserExists is_exist = 1;
+}
+
+
+//LIST USER
+
+message ListUserResponse {
+    repeated User users = 1;
+}
+
+
+//
+//messages TASKS
+message Task {
+    enum TaskStatus {
+        TO_DO = 0;
+        IN_PROGRESS = 1;
+        DONE = 2;
+    }
+
+    string id = 1;
+    string title = 2;
+    string description = 3;
+    TaskStatus status = 4;
+    string user_id = 5;
+}
+
+message CreateTaskRequest {
+    Task task = 1;
+}
+
+
+message CreateTaskResponse {
+    string task_id = 1; 
+}
+
+
+message ListTasksResponse {
+    repeated Task tasks = 1;
+}
