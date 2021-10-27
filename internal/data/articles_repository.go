@@ -16,12 +16,19 @@ type ArticlesRepository struct {
 
 */
 
-func (pr *ArticlesRepository) GetOne(ctx context.Context, id uint32) (*pb.CreateArticlerRequest, error) {
-	q := `SELECT id, name, price, description, user_id FROM articles WHERE id = $1;`
+func (pr *ArticlesRepository) GetOne(ctx context.Context, id uint32) (*pb.Article, error) {
+	q := `SELECT id, name, price, description,user_id, created_at, updated_at FROM articles WHERE id = $1;`
 
 	row := pr.Data.DB.QueryRowContext(ctx, q, id)
-	var art pb.CreateArticlerRequest
-	err := row.Scan(&art.Id, &art.Name, &art.Price, &art.Description, &art.UserId)
+	var art pb.Article
+
+	var created_at time.Time
+	var updated_at time.Time
+
+	err := row.Scan(&art.Id, &art.Name, &art.Price, &art.Description, &art.UserId, &created_at, &updated_at)
+
+	art.CreatedAt = created_at.String()
+	art.UpdatedAt = updated_at.String()
 
 	if err != nil {
 		log.Printf("Error %v", err.Error())
@@ -48,7 +55,14 @@ func (pr *ArticlesRepository) GetAll(ctx context.Context) ([]*pb.Article, error)
 	var articles []*pb.Article
 	for rows.Next() {
 		var p pb.Article
-		rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.UserId, &p.CreatedAt, &p.UpdatedAt)
+
+		var created_at time.Time
+		var updated_at time.Time
+
+		rows.Scan(&p.Id, &p.Name, &p.Price, &p.Description, &p.UserId, &created_at, &updated_at)
+
+		p.CreatedAt = created_at.String()
+		p.UpdatedAt = updated_at.String()
 
 		articles = append(articles, &p)
 	}

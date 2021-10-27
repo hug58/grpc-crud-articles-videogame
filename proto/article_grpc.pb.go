@@ -24,7 +24,7 @@ type ArticleServiceClient interface {
 	CreateArticle(ctx context.Context, in *CreateArticlerRequest, opts ...grpc.CallOption) (*ArticleId, error)
 	DeleteArticle(ctx context.Context, in *ArticleId, opts ...grpc.CallOption) (*Response, error)
 	UpdateArticle(ctx context.Context, in *CreateArticlerRequest, opts ...grpc.CallOption) (*CreateArticlerRequest, error)
-	GetOneArticle(ctx context.Context, in *ArticleId, opts ...grpc.CallOption) (*CreateArticlerRequest, error)
+	GetOneArticle(ctx context.Context, in *ArticleId, opts ...grpc.CallOption) (*Article, error)
 }
 
 type articleServiceClient struct {
@@ -80,8 +80,8 @@ func (c *articleServiceClient) UpdateArticle(ctx context.Context, in *CreateArti
 	return out, nil
 }
 
-func (c *articleServiceClient) GetOneArticle(ctx context.Context, in *ArticleId, opts ...grpc.CallOption) (*CreateArticlerRequest, error) {
-	out := new(CreateArticlerRequest)
+func (c *articleServiceClient) GetOneArticle(ctx context.Context, in *ArticleId, opts ...grpc.CallOption) (*Article, error) {
+	out := new(Article)
 	err := c.cc.Invoke(ctx, "/proto.ArticleService/GetOneArticle", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ type ArticleServiceServer interface {
 	CreateArticle(context.Context, *CreateArticlerRequest) (*ArticleId, error)
 	DeleteArticle(context.Context, *ArticleId) (*Response, error)
 	UpdateArticle(context.Context, *CreateArticlerRequest) (*CreateArticlerRequest, error)
-	GetOneArticle(context.Context, *ArticleId) (*CreateArticlerRequest, error)
+	GetOneArticle(context.Context, *ArticleId) (*Article, error)
 	mustEmbedUnimplementedArticleServiceServer()
 }
 
@@ -121,7 +121,7 @@ func (UnimplementedArticleServiceServer) DeleteArticle(context.Context, *Article
 func (UnimplementedArticleServiceServer) UpdateArticle(context.Context, *CreateArticlerRequest) (*CreateArticlerRequest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateArticle not implemented")
 }
-func (UnimplementedArticleServiceServer) GetOneArticle(context.Context, *ArticleId) (*CreateArticlerRequest, error) {
+func (UnimplementedArticleServiceServer) GetOneArticle(context.Context, *ArticleId) (*Article, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOneArticle not implemented")
 }
 func (UnimplementedArticleServiceServer) mustEmbedUnimplementedArticleServiceServer() {}

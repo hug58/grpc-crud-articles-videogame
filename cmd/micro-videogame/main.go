@@ -118,7 +118,7 @@ func (s *server) DeleteArticle(ctx context.Context, req *pb.ArticleId) (*pb.Resp
 
 //GET ARTICLE BY ID
 
-func (s *server) GetOneArticle(ctx context.Context, req *pb.ArticleId) (*pb.CreateArticlerRequest, error) {
+func (s *server) GetOneArticle(ctx context.Context, req *pb.ArticleId) (*pb.Article, error) {
 	log.Printf("Get Article By ID %v", req.ArticleId)
 
 	article, err := s.Repository.GetOne(ctx, req.ArticleId)
